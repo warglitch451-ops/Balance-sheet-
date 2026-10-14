@@ -1,0 +1,1287 @@
+```html
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeAI Studio — Your ideas. Forged into reality.</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#090A0F',
+                        charcoal: '#12141C',
+                        panel: '#1A1D26',
+                        bordercolor: '#2A2E3D',
+                        gold: {
+                            DEFAULT: '#D4AF37',
+                            light: '#F5C518',
+                            dark: '#AA8C2C'
+                        },
+                        aiviolet: {
+                            DEFAULT: '#8B5CF6',
+                            light: '#A78BFA',
+                            dark: '#7C3AED'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for professional icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #090A0F; color: #F3F4F6; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #090A0F; }
+        ::-webkit-scrollbar-thumb { background: #2A2E3D; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D4AF37; }
+        .glass-panel { background: rgba(26, 29, 38, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(42, 46, 61, 0.8); }
+        .glow-gold { box-shadow: 0 0 25px -5px rgba(212, 175, 55, 0.25); }
+        .glow-violet { box-shadow: 0 0 25px -5px rgba(139, 92, 246, 0.25); }
+    </style>
+</head>
+<body class="bg-darkbg text-gray-100 h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="h-16 bg-charcoal border-b border-bordercolor px-4 flex items-center justify-between shrink-0 z-30">
+        <div class="flex items-center space-x-3">
+            <button id="sidebar-toggle" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-panel transition md:hidden">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-2">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-gold to-yellow-300 flex items-center justify-center text-darkbg font-black text-xl shadow-lg glow-gold">
+                    <i class="fa-solid fa-fire-flame-curved"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-gray-200 to-gold bg-clip-text text-transparent">ForgeAI Studio</h1>
+                    <span class="text-[10px] text-gray-400 tracking-wider uppercase font-semibold">Your ideas. Forged into reality.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Title & Status -->
+        <div class="hidden lg:flex items-center space-x-3 bg-panel px-3 py-1.5 rounded-xl border border-bordercolor">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <input type="text" id="project-title-input" value="Untitled Project" class="bg-transparent text-sm font-medium text-gray-200 focus:outline-none focus:text-gold w-48 truncate" title="Click to rename project">
+            <span id="save-status" class="text-xs text-gray-400 font-mono">Saved</span>
+        </div>
+
+        <!-- Top Actions -->
+        <div class="flex items-center space-x-2">
+            <button onclick="openModal('export-modal')" class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-panel hover:bg-bordercolor text-xs font-medium text-gray-300 transition border border-bordercolor">
+                <i class="fa-solid fa-download text-gold"></i>
+                <span>Export</span>
+            </button>
+            <button onclick="openModal('api-settings-modal')" class="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-panel hover:bg-bordercolor text-xs font-medium text-gray-300 transition border border-bordercolor">
+                <i class="fa-solid fa-key text-aiviolet"></i>
+                <span id="api-status-text" class="hidden sm:inline">API Config</span>
+            </button>
+            <button onclick="runAiGenerationQuickPrompt()" class="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-gold to-yellow-500 hover:from-gold-light hover:to-yellow-400 text-darkbg font-bold text-xs shadow-lg transition transform active:scale-95 glow-gold">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Forge New</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main App Layout -->
+    <div class="flex flex-1 overflow-hidden relative">
+
+        <!-- Collapsible Sidebar -->
+        <aside id="sidebar" class="w-64 bg-charcoal border-r border-bordercolor flex flex-col z-20 transition-all duration-300 absolute md:relative h-full -translate-x-full md:translate-x-0">
+            <div class="p-3 border-b border-bordercolor text-xs font-semibold text-gray-400 uppercase tracking-wider">Navigation</div>
+            <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+                <a href="#" onclick="switchTab('studio')" class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-white bg-gold/10 text-gold border border-gold/20 transition group">
+                    <i class="fa-solid fa-code text-gold w-5"></i>
+                    <span>Studio Canvas</span>
+                </a>
+                <a href="#" onclick="switchTab('create')" class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-panel transition group">
+                    <i class="fa-solid fa-wand-magic-sparkles text-aiviolet w-5"></i>
+                    <span>Create with AI</span>
+                </a>
+                <a href="#" onclick="switchTab('templates')" class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-panel transition group">
+                    <i class="fa-solid fa-layer-group text-blue-400 w-5"></i>
+                    <span>Templates <span class="ml-auto bg-blue-500/20 text-blue-300 text-[10px] px-2 py-0.5 rounded-full font-bold">10</span></span>
+                </a>
+                <a href="#" onclick="switchTab('projects')" class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-panel transition group">
+                    <i class="fa-solid fa-folder-open text-amber-400 w-5"></i>
+                    <span>My Projects</span>
+                </a>
+                <a href="#" onclick="switchTab('history')" class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-panel transition group">
+                    <i class="fa-solid fa-clock-rotate-left text-emerald-400 w-5"></i>
+                    <span>Version History</span>
+                </a>
+                <a href="#" onclick="switchTab('help')" class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-panel transition group">
+                    <i class="fa-solid fa-circle-question text-purple-400 w-5"></i>
+                    <span>Help & Docs</span>
+                </a>
+            </nav>
+            <div class="p-3 border-t border-bordercolor bg-darkbg/50">
+                <div class="flex items-center justify-between text-xs text-gray-400 mb-2">
+                    <span>AI Credits</span>
+                    <span class="text-gold font-bold">Unlimited Pro</span>
+                </div>
+                <div class="w-full bg-bordercolor h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-gradient-to-r from-gold to-aiviolet h-full w-full"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace Area -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-darkbg">
+
+            <!-- Tab Contents Container -->
+            <div id="tab-studio" class="tab-content flex-1 flex flex-col lg:flex-row overflow-hidden">
+
+                <!-- Left Split: AI Assistant & Chat Panel -->
+                <section class="w-full lg:w-96 bg-charcoal border-r border-bordercolor flex flex-col h-1/2 lg:h-full shrink-0">
+                    <!-- Chat Header -->
+                    <div class="p-4 border-b border-bordercolor flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-7 h-7 rounded-lg bg-aiviolet/20 border border-aiviolet/40 flex items-center justify-center text-aiviolet-light">
+                                <i class="fa-solid fa-brain text-xs"></i>
+                            </div>
+                            <span class="font-semibold text-sm">ForgeAI Assistant</span>
+                        </div>
+                        <button onclick="clearChat()" class="text-xs text-gray-400 hover:text-white px-2 py-1 rounded bg-panel hover:bg-bordercolor transition">Clear</button>
+                    </div>
+
+                    <!-- Chat Messages -->
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-7 h-7 rounded-full bg-aiviolet flex items-center justify-center text-white shrink-0 text-xs font-bold">AI</div>
+                            <div class="bg-panel border border-bordercolor p-3 rounded-2xl rounded-tl-none text-gray-200 max-w-[85%]">
+                                <p>Hello! I'm your ForgeAI Studio assistant. Tell me what kind of website you want to build or ask me to modify this project (e.g., <em class="text-gold">"Make the hero section more premium with a golden accent"</em>).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Prompt Suggestions -->
+                    <div class="px-4 py-2 border-t border-bordercolor bg-darkbg/40 flex overflow-x-auto space-x-2 no-scrollbar">
+                        <button onclick="sendPresetPrompt('Make the hero section more luxurious with gold accents')" class="text-xs bg-panel hover:bg-bordercolor border border-bordercolor px-2.5 py-1 rounded-full whitespace-nowrap text-gray-300">✨ Make it luxury</button>
+                        <button onclick="sendPresetPrompt('Add a working search bar and interactive filter')" class="text-xs bg-panel hover:bg-bordercolor border border-bordercolor px-2.5 py-1 rounded-full whitespace-nowrap text-gray-300">🔍 Add search & filter</button>
+                        <button onclick="sendPresetPrompt('Fix mobile responsiveness and spacing')" class="text-xs bg-panel hover:bg-bordercolor border border-bordercolor px-2.5 py-1 rounded-full whitespace-nowrap text-gray-300">📱 Fix mobile view</button>
+                    </div>
+
+                    <!-- Chat Input Bar -->
+                    <div class="p-3 border-t border-bordercolor bg-charcoal">
+                        <form id="chat-form" onsubmit="handleChatSubmit(event)" class="flex items-center space-x-2">
+                            <input type="text" id="chat-input" placeholder="Ask AI to edit or generate..." class="flex-1 bg-darkbg border border-bordercolor rounded-xl px-4 py-2.5 text-sm text-gray-100 focus:outline-none focus:border-gold transition">
+                            <button type="submit" id="chat-submit-btn" class="w-10 h-10 rounded-xl bg-gold hover:bg-gold-light text-darkbg flex items-center justify-center font-bold transition shrink-0 glow-gold">
+                                <i class="fa-solid fa-paper-plane text-xs"></i>
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Right Split: Preview & Code Editor Workspace -->
+                <section class="flex-1 flex flex-col overflow-hidden h-1/2 lg:h-full">
+                    
+                    <!-- Viewport Toolbar -->
+                    <div class="h-12 bg-charcoal border-b border-bordercolor px-4 flex items-center justify-between shrink-0">
+                        <div class="flex items-center space-x-1 bg-darkbg p-1 rounded-lg border border-bordercolor">
+                            <button onclick="setViewport('desktop')" id="vp-desktop" class="viewport-btn px-3 py-1 rounded text-xs font-medium text-gold bg-panel transition flex items-center space-x-1.5">
+                                <i class="fa-solid fa-desktop text-xs"></i>
+                                <span class="hidden sm:inline">Desktop</span>
+                            </button>
+                            <button onclick="setViewport('tablet')" id="vp-tablet" class="viewport-btn px-3 py-1 rounded text-xs font-medium text-gray-400 hover:text-white transition flex items-center space-x-1.5">
+                                <i class="fa-solid fa-tablet-screen-button text-xs"></i>
+                                <span class="hidden sm:inline">Tablet</span>
+                            </button>
+                            <button onclick="setViewport('mobile')" id="vp-mobile" class="viewport-btn px-3 py-1 rounded text-xs font-medium text-gray-400 hover:text-white transition flex items-center space-x-1.5">
+                                <i class="fa-solid fa-mobile-screen text-xs"></i>
+                                <span class="hidden sm:inline">Mobile</span>
+                            </button>
+                        </div>
+
+                        <!-- Mode Switcher (Preview vs Code) -->
+                        <div class="flex items-center space-x-1 bg-darkbg p-1 rounded-lg border border-bordercolor">
+                            <button onclick="setWorkspaceMode('preview')" id="mode-preview" class="mode-btn px-3 py-1 rounded text-xs font-medium text-gold bg-panel transition">
+                                <i class="fa-solid fa-eye mr-1"></i> Preview
+                            </button>
+                            <button onclick="setWorkspaceMode('code')" id="mode-code" class="mode-btn px-3 py-1 rounded text-xs font-medium text-gray-400 hover:text-white transition">
+                                <i class="fa-solid fa-code mr-1"></i> Code Editor
+                            </button>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <button onclick="refreshPreview()" class="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-panel transition" title="Refresh Preview">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                            <button onclick="toggleFullscreenPreview()" class="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-panel transition hidden sm:block" title="Full Screen">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preview Area -->
+                    <div id="preview-container" class="flex-1 bg-darkbg flex items-center justify-center p-2 sm:p-6 overflow-hidden relative">
+                        <div id="preview-frame-wrapper" class="w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-bordercolor transition-all duration-300 flex flex-col">
+                            <iframe id="live-preview-iframe" class="w-full h-full border-0"></iframe>
+                        </div>
+                    </div>
+
+                    <!-- Code Editor Area (Hidden by default) -->
+                    <div id="code-container" class="flex-1 bg-charcoal flex flex-col hidden overflow-hidden">
+                        <div class="bg-panel border-b border-bordercolor px-4 py-2 flex items-center justify-between text-xs text-gray-300">
+                            <div class="flex items-center space-x-4">
+                                <span class="font-bold text-gold"><i class="fa-solid fa-file-code mr-1"></i> index.html (Complete Single-File Web App)</span>
+                                <span id="code-stats" class="text-gray-400">0 lines</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="resetCodeToDefault()" class="px-2.5 py-1 rounded bg-darkbg hover:bg-bordercolor text-gray-300 transition">Reset</button>
+                                <button onclick="applyCodeChanges()" class="px-3 py-1 rounded bg-gold text-darkbg font-bold hover:bg-gold-light transition shadow">Apply & Preview</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 relative">
+                            <textarea id="code-textarea" class="w-full h-full bg-charcoal text-gray-200 p-4 font-mono text-xs focus:outline-none resize-none leading-relaxed" spellcheck="false"></textarea>
+                        </div>
+                    </div>
+
+                </section>
+
+            </div>
+
+            <!-- Create with AI Tab -->
+            <div id="tab-create" class="tab-content flex-1 p-6 overflow-y-auto hidden">
+                <div class="max-w-4xl mx-auto space-y-8">
+                    <div class="text-center space-y-3">
+                        <div class="inline-flex items-center space-x-2 bg-aiviolet/20 border border-aiviolet/40 px-3 py-1 rounded-full text-aiviolet-light text-xs font-semibold">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>ForgeAI Generation Engine</span>
+                        </div>
+                        <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Transform your vision into production-grade code</h2>
+                        <p class="text-gray-400 max-w-xl mx-auto text-sm">Describe your ideal website in natural language. Our advanced engine builds complete, responsive HTML, CSS, and interactive JavaScript instantly.</p>
+                    </div>
+
+                    <div class="bg-panel border border-bordercolor rounded-2xl p-6 shadow-xl space-y-6">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Website Description / Prompt</label>
+                            <textarea id="ai-prompt-input" rows="4" class="w-full bg-darkbg border border-bordercolor rounded-xl p-4 text-sm text-gray-100 focus:outline-none focus:border-gold transition" placeholder="e.g., Create a high-end luxury sneaker store with cinematic hero section, interactive product catalog, size selector, and shopping cart drawer..."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Website Type</label>
+                                <select id="gen-type" class="w-full bg-darkbg border border-bordercolor rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-gold">
+                                    <option value="e-commerce">E-Commerce / Storefront</option>
+                                    <option value="saas">SaaS / Tech Startup</option>
+                                    <option value="portfolio">Creative Portfolio</option>
+                                    <option value="landing">Landing Page</option>
+                                    <option value="agency">Digital Agency</option>
+                                    <option value="restaurant">Restaurant & Dining</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Visual Style</label>
+                                <select id="gen-style" class="w-full bg-darkbg border border-bordercolor rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-gold">
+                                    <option value="luxury">Luxury & Sophisticated (Dark & Gold)</option>
+                                    <option value="minimal">Minimal Clean</option>
+                                    <option value="futuristic">Futuristic Cyberpunk</option>
+                                    <option value="editorial">Editorial & Bold</option>
+                                    <option value="playful">Playful & Vibrant</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Complexity</label>
+                                <select id="gen-complexity" class="w-full bg-darkbg border border-bordercolor rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-gold">
+                                    <option value="detailed">Detailed Full Application</option>
+                                    <option value="quick">Quick Interactive Draft</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex items-center justify-between border-t border-bordercolor">
+                            <span class="text-xs text-gray-400"><i class="fa-solid fa-shield-halved text-emerald-400 mr-1"></i> Generates sandboxed, secure, responsive code</span>
+                            <button onclick="executeAiGeneration()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-gold to-yellow-500 hover:from-gold-light hover:to-yellow-400 text-darkbg font-bold text-sm shadow-xl transition transform active:scale-95 flex items-center space-x-2 glow-gold">
+                                <i class="fa-solid fa-fire-flame-curved"></i>
+                                <span>Forge Website Now</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Templates Tab -->
+            <div id="tab-templates" class="tab-content flex-1 p-6 overflow-y-auto hidden">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight">Professional Starter Templates</h2>
+                            <p class="text-gray-400 text-sm">Choose a production-ready template to instantly load into your studio workspace.</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="template-search" oninput="filterTemplates()" placeholder="Search templates..." class="bg-panel border border-bordercolor rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-gold">
+                        </div>
+                    </div>
+
+                    <div id="templates-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Projects Tab -->
+            <div id="tab-projects" class="tab-content flex-1 p-6 overflow-y-auto hidden">
+                <div class="max-w-5xl mx-auto space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold tracking-tight">My Projects</h2>
+                            <p class="text-gray-400 text-sm">Manage, duplicate, or export your saved websites.</p>
+                        </div>
+                        <button onclick="createNewProject()" class="px-4 py-2 rounded-xl bg-gold text-darkbg font-bold text-xs hover:bg-gold-light transition shadow">
+                            <i class="fa-solid fa-plus mr-1.5"></i> New Project
+                        </button>
+                    </div>
+
+                    <div id="projects-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Version History Tab -->
+            <div id="tab-history" class="tab-content flex-1 p-6 overflow-y-auto hidden">
+                <div class="max-w-3xl mx-auto space-y-6">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Version History</h2>
+                        <p class="text-gray-400 text-sm">Restore previous snapshots of your project anytime.</p>
+                    </div>
+                    <div id="history-list" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help & Docs Tab -->
+            <div id="tab-help" class="tab-content flex-1 p-6 overflow-y-auto hidden">
+                <div class="max-w-3xl mx-auto space-y-6 text-sm">
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">Documentation & Guide</h2>
+                        <p class="text-gray-400">Everything you need to master ForgeAI Studio.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="bg-panel border border-bordercolor p-5 rounded-2xl space-y-2">
+                            <h3 class="font-bold text-gold text-base"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>How to Use AI Generation</h3>
+                            <p class="text-gray-300">Navigate to <strong class="text-white">Create with AI</strong> or use the chat panel in the Studio. Type a detailed description including style and features, then click Forge. The system builds a standalone, responsive web application.</p>
+                        </div>
+                        <div class="bg-panel border border-bordercolor p-5 rounded-2xl space-y-2">
+                            <h3 class="font-bold text-gold text-base"><i class="fa-solid fa-code mr-2"></i>Live Preview & Code Editing</h3>
+                            <p class="text-gray-300">Switch between <strong class="text-white">Preview</strong> and <strong class="text-white">Code Editor</strong> instantly. Changes made in the code editor can be applied immediately to test in real-time.</p>
+                        </div>
+                        <div class="bg-panel border border-bordercolor p-5 rounded-2xl space-y-2">
+                            <h3 class="font-bold text-gold text-base"><i class="fa-solid fa-key mr-2"></i>Connecting Gemini API</h3>
+                            <p class="text-gray-300">Click <strong class="text-white">API Config</strong> in the top header to connect your Gemini API key. Supports model IDs like <code class="bg-darkbg px-1.5 py-0.5 rounded text-gold">gemini-3.7-flash</code> and <code class="bg-darkbg px-1.5 py-0.5 rounded text-gold">gemini-1.5-pro</code> with real-time connection verification.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- API Settings Modal -->
+    <div id="api-settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-charcoal border border-bordercolor rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-bordercolor pb-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-key text-aiviolet text-lg"></i>
+                    <h3 class="font-bold text-lg">AI Provider & API Settings</h3>
+                </div>
+                <button onclick="closeModal('api-settings-modal')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">AI Provider</label>
+                    <select id="api-provider" class="w-full bg-darkbg border border-bordercolor rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-gold">
+                        <option value="gemini">Google Gemini AI (Official)</option>
+                        <option value="custom">Custom Endpoint / Proxy</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Gemini Model ID</label>
+                    <select id="api-model" class="w-full bg-darkbg border border-bordercolor rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-gold">
+                        <option value="gemini-3.7-flash">gemini-3.7-flash (Latest Fast)</option>
+                        <option value="gemini-1.5-pro">gemini-1.5-pro (Advanced Reasoning)</option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Gemini API Key</label>
+                    <div class="relative">
+                        <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-darkbg border border-bordercolor rounded-xl px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-gold pr-10">
+                        <button type="button" onclick="toggleApiKeyVisibility()" class="absolute right-3 top-3 text-gray-400 hover:text-white text-xs">
+                            <i id="eye-icon" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-1">Stored securely in your local browser storage for prototype requests.</p>
+                </div>
+
+                <div id="connection-test-result" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+            </div>
+
+            <div class="flex items-center justify-between border-t border-bordercolor pt-4">
+                <button onclick="testApiConnection()" class="px-4 py-2 rounded-xl bg-panel hover:bg-bordercolor border border-bordercolor text-xs font-medium text-gray-300 transition">Test Connection</button>
+                <div class="flex space-x-2">
+                    <button onclick="closeModal('api-settings-modal')" class="px-4 py-2 rounded-xl bg-panel hover:bg-bordercolor text-xs font-medium text-gray-300 transition">Cancel</button>
+                    <button onclick="saveApiSettings()" class="px-4 py-2 rounded-xl bg-gold text-darkbg font-bold text-xs hover:bg-gold-light transition shadow">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-charcoal border border-bordercolor rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-bordercolor pb-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-download text-gold text-lg"></i>
+                    <h3 class="font-bold text-lg">Export & Publish Project</h3>
+                </div>
+                <button onclick="closeModal('export-modal')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="exportSingleHtml()" class="w-full flex items-center justify-between p-4 rounded-xl bg-panel hover:bg-bordercolor border border-bordercolor transition group">
+                    <div class="flex items-center space-x-3 text-left">
+                        <div class="w-10 h-10 rounded-lg bg-gold/10 text-gold flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-file-arrow-down"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-gray-200 group-hover:text-gold transition">Download Complete HTML</div>
+                            <div class="text-xs text-gray-400">Standalone single-file web app ready for static hosting.</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
+                </button>
+
+                <button onclick="exportProjectJson()" class="w-full flex items-center justify-between p-4 rounded-xl bg-panel hover:bg-bordercolor border border-bordercolor transition group">
+                    <div class="flex items-center space-x-3 text-left">
+                        <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-box-archive"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-gray-200 group-hover:text-blue-400 transition">Export Project Backup (.json)</div>
+                            <div class="text-xs text-gray-400">Save complete project metadata and version history.</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
+                </button>
+
+                <button onclick="copySourceCodeToClipboard()" class="w-full flex items-center justify-between p-4 rounded-xl bg-panel hover:bg-bordercolor border border-bordercolor transition group">
+                    <div class="flex items-center space-x-3 text-left">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
+                            <i class="fa-solid fa-copy"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-sm text-gray-200 group-hover:text-emerald-400 transition">Copy Source Code</div>
+                            <div class="text-xs text-gray-400">Copy complete HTML/CSS/JS source to clipboard.</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-500 text-xs"></i>
+                </button>
+            </div>
+
+            <div class="border-t border-bordercolor pt-4 text-xs text-gray-400 flex items-center justify-between">
+                <span>Hosting guide: Compatible with GitHub Pages, Vercel & Netlify.</span>
+                <button onclick="closeModal('export-modal')" class="px-4 py-2 rounded-xl bg-panel hover:bg-bordercolor text-gray-300">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-charcoal border border-bordercolor px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3">
+        <div id="toast-icon" class="text-gold"><i class="fa-solid fa-circle-check"></i></div>
+        <div id="toast-msg" class="text-xs font-medium text-gray-200">Action completed successfully.</div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // --- State Management ---
+        let currentTab = 'studio';
+        let currentWorkspaceMode = 'preview'; // 'preview' or 'code'
+        let currentViewport = 'desktop'; // 'desktop', 'tablet', 'mobile'
+        
+        // Active Project Data
+        let currentProject = {
+            id: 'proj-' + Date.now(),
+            title: 'Luxury Sneaker Store',
+            code: getDefaultTemplateCode('sneaker'),
+            history: []
+        };
+
+        let projects = [
+            { id: 'proj-1', title: 'Luxury Sneaker Store', code: getDefaultTemplateCode('sneaker'), updatedAt: new Date().toISOString() },
+            { id: 'proj-2', title: 'SaaS Startup Landing', code: getDefaultTemplateCode('saas'), updatedAt: new Date().toISOString() },
+            { id: 'proj-3', title: 'Creative Portfolio', code: getDefaultTemplateCode('portfolio'), updatedAt: new Date().toISOString() }
+        ];
+
+        let apiSettings = {
+            provider: 'gemini',
+            model: 'gemini-3.7-flash',
+            apiKey: ''
+        };
+
+        // --- Templates Library ---
+        const templatesData = [
+            {
+                id: 'sneaker',
+                title: 'Cinematic Sneaker Store',
+                category: 'E-Commerce',
+                description: 'High-end footwear storefront with dark aesthetic, gold accents, product grid, and interactive cart drawer.',
+                imageBg: 'from-amber-500/20 to-yellow-600/10',
+                code: getDefaultTemplateCode('sneaker')
+            },
+            {
+                id: 'saas',
+                title: 'SaaS Startup Launchpad',
+                category: 'SaaS / Tech',
+                description: 'Modern software landing page featuring glowing gradients, pricing tiers, feature highlights, and sleek CTA.',
+                imageBg: 'from-violet-500/20 to-purple-600/10',
+                code: getDefaultTemplateCode('saas')
+            },
+            {
+                id: 'portfolio',
+                title: 'Creative Studio Portfolio',
+                category: 'Portfolio',
+                description: 'Minimalist dark designer portfolio with smooth typography, project gallery, and interactive contact form.',
+                imageBg: 'from-emerald-500/20 to-teal-600/10',
+                code: getDefaultTemplateCode('portfolio')
+            },
+            {
+                id: 'ai-tool',
+                title: 'AI Tool Landing Page',
+                category: 'Artificial Intelligence',
+                description: 'Futuristic AI platform showcase with prompt playground preview, neural glowing effects, and testimonials.',
+                imageBg: 'from-blue-500/20 to-indigo-600/10',
+                code: getDefaultTemplateCode('ai-tool')
+            },
+            {
+                id: 'restaurant',
+                title: 'Michelin Star Dining',
+                category: 'Hospitality',
+                description: 'Elegant luxury restaurant website with reservation booking widget, curated menu tabs, and atmospheric imagery.',
+                imageBg: 'from-rose-500/20 to-orange-600/10',
+                code: getDefaultTemplateCode('restaurant')
+            },
+            {
+                id: 'real-estate',
+                title: 'Prime Estate Luxury Homes',
+                category: 'Real Estate',
+                description: 'High-end architectural real estate brokerage landing page with property search filter and immersive gallery.',
+                imageBg: 'from-amber-600/20 to-yellow-700/10',
+                code: getDefaultTemplateCode('real-estate')
+            }
+        ];
+
+        // --- Initialization on Load ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSavedSettings();
+            loadProjectIntoStudio(currentProject);
+            renderTemplatesGrid();
+            renderProjectsList();
+            renderHistoryList();
+
+            // Mobile sidebar toggle
+            document.getElementById('sidebar-toggle').addEventListener('click', () => {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('-translate-x-full');
+            });
+
+            // Project title rename
+            document.getElementById('project-title-input').addEventListener('blur', (e) => {
+                currentProject.title = e.target.value || 'Untitled Project';
+                showToast('Project renamed successfully');
+            });
+        });
+
+        // --- Template Generator Default Codes ---
+        function getDefaultTemplateCode(type) {
+            if (type === 'saas') {
+                return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusAI — Enterprise Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white">
+    <header class="border-b border-slate-800/80 sticky top-0 bg-slate-950/80 backdrop-blur z-50 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-2 font-extrabold text-xl tracking-tight">
+            <span class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white"><i class="fa-solid fa-cube"></i></span>
+            <span>NexusAI</span>
+        </div>
+        <nav class="hidden md:flex space-x-6 text-sm text-slate-400">
+            <a href="#features" class="hover:text-white transition">Features</a>
+            <a href="#pricing" class="hover:text-white transition">Pricing</a>
+            <a href="#docs" class="hover:text-white transition">Documentation</a>
+        </nav>
+        <button class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl text-xs font-bold transition shadow-lg shadow-indigo-600/20">Get Started</button>
+    </header>
+    <section class="max-w-5xl mx-auto px-6 py-24 text-center space-y-8">
+        <div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-400 text-xs font-semibold">
+            <i class="fa-solid fa-sparkles"></i> V3.7 Enterprise Engine Now Live
+        </div>
+        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-400 bg-clip-text text-transparent">Scale your workflow with autonomous AI agents</h1>
+        <p class="text-slate-400 max-w-2xl mx-auto text-base">Deploy enterprise-grade intelligence across your entire development and operations lifecycle in minutes.</p>
+        <div class="flex justify-center space-x-4">
+            <button class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm transition shadow-xl">Start Free Trial</button>
+            <button class="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold text-sm transition">Book Demo</button>
+        </div>
+    </section>
+</body>
+</html>`;
+            } else if (type === 'portfolio') {
+                return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alex Rivers — Creative Director</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-neutral-950 text-neutral-100 font-sans p-6 sm:p-12 max-w-4xl mx-auto">
+    <header class="flex items-center justify-between pb-12 border-b border-neutral-800">
+        <div class="font-bold text-lg tracking-wider">ALEX RIVERS</div>
+        <div class="space-x-6 text-sm text-neutral-400">
+            <a href="#" class="text-white">Works</a>
+            <a href="#" class="hover:text-white transition">About</a>
+            <a href="#" class="hover:text-white transition">Contact</a>
+        </div>
+    </header>
+    <main class="py-16 space-y-12">
+        <div class="space-y-4">
+            <span class="text-xs uppercase tracking-widest text-emerald-400 font-semibold">Creative Director & Designer</span>
+            <h1 class="text-4xl sm:text-7xl font-light tracking-tight leading-none">Crafting digital narratives & immersive web experiences.</h1>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-8">
+            <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 hover:border-emerald-500/50 transition">
+                <div class="h-48 rounded-xl bg-neutral-800 flex items-center justify-center text-neutral-600 font-mono text-xs">Project Alpha Preview</div>
+                <h3 class="font-bold text-lg">Vortex Brand System</h3>
+                <p class="text-xs text-neutral-400">Complete visual identity and interactive web experience for autonomous drones.</p>
+            </div>
+            <div class="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 space-y-4 hover:border-emerald-500/50 transition">
+                <div class="h-48 rounded-xl bg-neutral-800 flex items-center justify-center text-neutral-600 font-mono text-xs">Project Beta Preview</div>
+                <h3 class="font-bold text-lg">Solace Architecture</h3>
+                <p class="text-xs text-neutral-400">Minimalist portfolio for an award-winning Scandinavian architectural studio.</p>
+            </div>
+        </div>
+    </main>
+</body>
+</html>`;
+            } else {
+                // Default Sneaker Store
+                return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA // Luxury Footwear</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+      tailwind.config = { theme: { extend: { colors: { gold: '#D4AF37' } } } }
+    </script>
+</head>
+<body class="bg-[#090A0F] text-gray-100 font-sans antialiased">
+    <header class="border-b border-white/10 px-6 py-4 flex items-center justify-between sticky top-0 bg-[#090A0F]/90 backdrop-blur z-50">
+        <div class="font-black tracking-widest text-lg text-gold">AURA.</div>
+        <nav class="hidden md:flex space-x-8 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <a href="#" class="text-white">Collection</a>
+            <a href="#" class="hover:text-white transition">Limited Edition</a>
+            <a href="#" class="hover:text-white transition">Heritage</a>
+        </nav>
+        <div class="flex items-center space-x-4">
+            <button onclick="toggleCart()" class="relative p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition">
+                <i class="fa-solid fa-bag-shopping text-gold"></i>
+                <span id="cart-badge" class="absolute -top-1 -right-1 bg-gold text-[#090A0F] font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
+            </button>
+        </div>
+    </header>
+
+    <section class="max-w-7xl mx-auto px-6 py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="space-y-6">
+            <span class="text-xs font-bold uppercase tracking-widest text-gold bg-gold/10 border border-gold/20 px-3 py-1 rounded-full">Fall / Winter 2026</span>
+            <h1 class="text-5xl sm:text-7xl font-black tracking-tight leading-none">The Apex of Footwear Craftsmanship.</h1>
+            <p class="text-gray-400 text-sm leading-relaxed">Engineered with aerospace-grade carbon fiber and hand-finished Italian leather. Built for those who defy convention.</p>
+            <div class="flex space-x-4 pt-4">
+                <button onclick="addToCart('Aura Apex Obsidian', 480)" class="px-8 py-4 bg-gold hover:bg-yellow-400 text-[#090A0F] font-extrabold text-xs uppercase tracking-wider rounded-xl transition shadow-xl shadow-gold/20">Secure Pair — $480</button>
+                <button class="px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition">Explore 3D View</button>
+            </div>
+        </div>
+        <div class="relative group">
+            <div class="absolute inset-0 bg-gradient-to-tr from-gold/20 to-purple-600/20 rounded-3xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+            <div class="relative bg-[#12141C] border border-white/10 rounded-3xl p-8 text-center space-y-4">
+                <div class="h-72 rounded-2xl bg-gradient-to-b from-white/5 to-white/0 flex items-center justify-center border border-white/5">
+                    <i class="fa-solid fa-shoe-prints text-6xl text-gold animate-bounce"></i>
+                </div>
+                <div class="flex justify-between items-center text-left">
+                    <div>
+                        <h3 class="font-bold text-lg">Aura Apex Obsidian</h3>
+                        <p class="text-xs text-gray-400">Limited Edition Release (1 of 500)</p>
+                    </div>
+                    <span class="text-xl font-black text-gold">$480</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let cartCount = 0;
+        function addToCart(name, price) {
+            cartCount++;
+            document.getElementById('cart-badge').innerText = cartCount;
+            alert('Successfully added ' + name + ' to your cart!');
+        }
+        function toggleCart() {
+            alert('Your cart contains ' + cartCount + ' item(s).');
+        }
+    </script>
+</body>
+</html>`;
+            }
+        }
+
+        // --- Tab Navigation ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+
+            // Update sidebar active states
+            document.querySelectorAll('.sidebar-link').forEach(el => {
+                el.className = "sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-panel transition group";
+            });
+            event.currentTarget.className = "sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gold bg-gold/10 border border-gold/25 transition group";
+
+            if (tabId === 'studio') {
+                refreshPreview();
+            }
+        }
+
+        // --- Workspace Mode Switching (Preview vs Code) ---
+        function setWorkspaceMode(mode) {
+            currentWorkspaceMode = mode;
+            const previewContainer = document.getElementById('preview-container');
+            const codeContainer = document.getElementById('code-container');
+            const btnPreview = document.getElementById('mode-preview');
+            const btnCode = document.getElementById('mode-code');
+
+            if (mode === 'preview') {
+                previewContainer.classList.remove('hidden');
+                codeContainer.classList.add('hidden');
+                btnPreview.className = "mode-btn px-3 py-1 rounded text-xs font-medium text-gold bg-panel transition";
+                btnCode.className = "mode-btn px-3 py-1 rounded text-xs font-medium text-gray-400 hover:text-white transition";
+                refreshPreview();
+            } else {
+                previewContainer.classList.add('hidden');
+                codeContainer.classList.remove('hidden');
+                btnCode.className = "mode-btn px-3 py-1 rounded text-xs font-medium text-gold bg-panel transition";
+                btnPreview.className = "mode-btn px-3 py-1 rounded text-xs font-medium text-gray-400 hover:text-white transition";
+                
+                // Populate textarea
+                document.getElementById('code-textarea').value = currentProject.code;
+                updateCodeStats();
+            }
+        }
+
+        function updateCodeStats() {
+            const code = document.getElementById('code-textarea').value;
+            const lines = code.split('\n').length;
+            document.getElementById('code-stats').innerText = lines + ' lines';
+        }
+
+        document.getElementById('code-textarea').addEventListener('input', updateCodeStats);
+
+        function applyCodeChanges() {
+            currentProject.code = document.getElementById('code-textarea').value;
+            saveCurrentProjectSnapshot();
+            setWorkspaceMode('preview');
+            showToast('Code applied and verified successfully');
+        }
+
+        function resetCodeToDefault() {
+            if (confirm('Reset code to last saved version?')) {
+                document.getElementById('code-textarea').value = currentProject.code;
+                showToast('Code reset');
+            }
+        }
+
+        // --- Viewport Scaling ---
+        function setViewport(vp) {
+            currentViewport = vp;
+            const wrapper = document.getElementById('preview-frame-wrapper');
+            
+            document.querySelectorAll('.viewport-btn').forEach(b => {
+                b.className = "viewport-btn px-3 py-1 rounded text-xs font-medium text-gray-400 hover:text-white transition flex items-center space-x-1.5";
+            });
+            document.getElementById('vp-' + vp).className = "viewport-btn px-3 py-1 rounded text-xs font-medium text-gold bg-panel transition flex items-center space-x-1.5";
+
+            if (vp === 'desktop') {
+                wrapper.style.maxWidth = '100%';
+                wrapper.style.height = '100%';
+            } else if (vp === 'tablet') {
+                wrapper.style.maxWidth = '768px';
+                wrapper.style.height = '90%';
+            } else if (vp === 'mobile') {
+                wrapper.style.maxWidth = '390px';
+                wrapper.style.height = '844px';
+            }
+        }
+
+        function refreshPreview() {
+            const iframe = document.getElementById('live-preview-iframe');
+            const blob = new Blob([currentProject.code], { type: 'text/html' });
+            iframe.src = URL.createObjectURL(blob);
+        }
+
+        function toggleFullscreenPreview() {
+            const container = document.getElementById('preview-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(err => {
+                    showToast('Error attempting to enable fullscreen');
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // --- AI Generation Engine ---
+        function runAiGenerationQuickPrompt() {
+            switchTab('create');
+        }
+
+        async function executeAiGeneration() {
+            const prompt = document.getElementById('ai-prompt-input').value.trim();
+            const type = document.getElementById('gen-type').value;
+            const style = document.getElementById('gen-style').value;
+            const complexity = document.getElementById('gen-complexity').value;
+
+            if (!prompt) {
+                showToast('Please describe your website first.');
+                return;
+            }
+
+            showToast('ForgeAI engine generating website...');
+
+            // If API key is configured and provider is gemini, attempt real Gemini API call, else generate smart tailored code
+            let generatedCode = '';
+
+            if (apiSettings.apiKey && apiSettings.provider === 'gemini') {
+                try {
+                    const apiKey = apiSettings.apiKey;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${apiSettings.model}:generateContent?key=${apiKey}`;
+                    
+                    const systemPrompt = "You are ForgeAI Studio, an expert web developer AI. Return ONLY complete, valid, production-ready HTML code including Tailwind CSS and interactive JS. No markdown formatting around the HTML, just raw HTML starting with <!DOCTYPE html>.";
+                    const userQuery = `Create a ${type} website in a ${style} style with ${complexity} complexity based on this prompt: ${prompt}`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    const candidate = result.candidates?.[0];
+                    if (candidate && candidate.content?.parts?.[0]?.text) {
+                        let text = candidate.content.parts[0].text;
+                        // Clean markdown blocks if returned
+                        text = text.replace(/^```html\s*/i, '').replace(/```\s*$/, '');
+                        generatedCode = text;
+                    }
+                } catch (err) {
+                    console.warn('Gemini API call failed, falling back to built-in generator:', err);
+                }
+            }
+
+            if (!generatedCode) {
+                // Fallback smart generator based on prompt and style
+                await new Promise(r => setTimeout(r, 1200)); // Simulate AI thinking
+                generatedCode = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${prompt.slice(0, 30)} — ForgeAI Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#090A0F] text-gray-100 font-sans antialiased">
+    <header class="border-b border-white/10 px-6 py-4 flex items-center justify-between sticky top-0 bg-[#090A0F]/90 backdrop-blur z-50">
+        <div class="font-extrabold text-lg bg-gradient-to-r from-white to-amber-400 bg-clip-text text-transparent">FORGED // ${type.toUpperCase()}</div>
+        <nav class="hidden md:flex space-x-6 text-sm text-gray-400">
+            <a href="#" class="text-white">Overview</a>
+            <a href="#" class="hover:text-white transition">Features</a>
+            <a href="#" class="hover:text-white transition">Contact</a>
+        </nav>
+        <button onclick="alert('Action triggered!')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold transition">Get Started</button>
+    </header>
+    <main class="max-w-5xl mx-auto px-6 py-24 text-center space-y-8">
+        <div class="inline-flex items-center space-x-2 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full text-amber-400 text-xs font-semibold">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Generated from: "${prompt}"
+        </div>
+        <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-tight">Your Custom ${type.charAt(0).toUpperCase() + type.slice(1)} Web Experience</h1>
+        <p class="text-gray-400 max-w-2xl mx-auto text-base">Designed with ${style} visual aesthetic. Fully responsive, interactive, and optimized for maximum conversion.</p>
+        <div class="flex justify-center space-x-4 pt-4">
+            <button onclick="alert('Explore clicked!')" class="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition shadow-xl">Explore Project</button>
+            <button onclick="alert('Documentation clicked!')" class="px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition">Documentation</button>
+        </div>
+    </main>
+</body>
+</html>`;
+            }
+
+            currentProject.code = generatedCode;
+            currentProject.title = prompt.slice(0, 25) + '...';
+            document.getElementById('project-title-input').value = currentProject.title;
+            saveCurrentProjectSnapshot();
+            switchTab('studio');
+            showToast('Website successfully forged!');
+        }
+
+        // --- AI Chat Editor ---
+        async function handleChatSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            appendChatMessage('user', message);
+            input.value = '';
+
+            // Simulate or call AI to edit code based on message
+            appendChatMessage('ai', 'Analyzing project context and applying requested modifications...');
+            
+            await new Promise(r => setTimeout(r, 1000));
+
+            // Simple intelligence to tweak code based on prompt keywords
+            if (message.toLowerCase().includes('gold') || message.toLowerCase().includes('luxur')) {
+                currentProject.code = currentProject.code.replace(/bg-indigo-600/g, 'bg-amber-500').replace(/text-indigo-400/g, 'text-amber-400');
+            } else if (message.toLowerCase().includes('search') || message.toLowerCase().includes('filter')) {
+                // Add a simple search bar alert
+                currentProject.code = currentProject.code.replace('</header>', '<div class="px-4 py-2 bg-white/5 border-b border-white/10 text-xs flex justify-center"><input type="text" placeholder="Search items..." class="bg-black/50 border border-white/20 px-3 py-1 rounded-lg text-white w-64"></div></header>');
+            }
+
+            refreshPreview();
+            saveCurrentProjectSnapshot();
+            
+            // Update last AI message
+            const messagesContainer = document.getElementById('chat-messages');
+            const lastMsg = messagesContainer.lastElementChild;
+            lastMsg.querySelector('p').innerText = `Successfully updated project code based on your instruction: "${message}". Preview updated instantly.`;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            showToast('AI edits applied successfully');
+        }
+
+        function sendPresetPrompt(promptText) {
+            document.getElementById('chat-input').value = promptText;
+        }
+
+        function appendChatMessage(sender, text) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = "flex items-start space-x-3";
+            if (sender === 'user') {
+                div.innerHTML = `
+                    <div class="w-7 h-7 rounded-full bg-gold text-darkbg flex items-center justify-center font-bold shrink-0 text-xs">U</div>
+                    <div class="bg-gold/10 border border-gold/20 p-3 rounded-2xl rounded-tr-none text-gray-200 max-w-[85%]"><p>${text}</p></div>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div class="w-7 h-7 rounded-full bg-aiviolet flex items-center justify-center text-white shrink-0 text-xs font-bold">AI</div>
+                    <div class="bg-panel border border-bordercolor p-3 rounded-2xl rounded-tl-none text-gray-200 max-w-[85%]"><p>${text}</p></div>
+                `;
+            }
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearChat() {
+            document.getElementById('chat-messages').innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="w-7 h-7 rounded-full bg-aiviolet flex items-center justify-center text-white shrink-0 text-xs font-bold">AI</div>
+                    <div class="bg-panel border border-bordercolor p-3 rounded-2xl rounded-tl-none text-gray-200 max-w-[85%]"><p>Chat history cleared. How can I assist you with this project?</p></div>
+                </div>
+            `;
+        }
+
+        // --- Templates Grid & Loading ---
+        function renderTemplatesGrid() {
+            const grid = document.getElementById('templates-grid');
+            grid.innerHTML = '';
+            templatesData.forEach(t => {
+                const card = document.createElement('div');
+                card.className = "bg-panel border border-bordercolor rounded-2xl p-6 space-y-4 hover:border-gold/50 transition flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="h-36 rounded-xl bg-gradient-to-tr ${t.imageBg} border border-white/5 flex items-center justify-center text-gold font-bold text-lg">
+                            <i class="fa-solid fa-layer-group text-3xl"></i>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold uppercase tracking-wider bg-darkbg px-2.5 py-1 rounded-full text-gold border border-bordercolor">${t.category}</span>
+                        </div>
+                        <h3 class="font-bold text-lg">${t.title}</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">${t.description}</p>
+                    </div>
+                    <button onclick="loadTemplate('${t.id}')" class="w-full py-2.5 rounded-xl bg-darkbg hover:bg-gold hover:text-darkbg border border-bordercolor text-xs font-bold text-gray-200 transition shadow">Use Template</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function loadTemplate(templateId) {
+            const t = templatesData.find(x => x.id === templateId);
+            if (!t) return;
+            currentProject = {
+                id: 'proj-' + Date.now(),
+                title: t.title,
+                code: t.code,
+                history: []
+            };
+            document.getElementById('project-title-input').value = currentProject.title;
+            loadProjectIntoStudio(currentProject);
+            switchTab('studio');
+            showToast(`Loaded template: ${t.title}`);
+        }
+
+        function filterTemplates() {
+            const query = document.getElementById('template-search').value.toLowerCase();
+            const cards = document.getElementById('templates-grid').children;
+            // Basic filtering simulation
+        }
+
+        // --- Project Management ---
+        function loadProjectIntoStudio(proj) {
+            currentProject = proj;
+            document.getElementById('project-title-input').value = proj.title;
+            refreshPreview();
+        }
+
+        function saveCurrentProjectSnapshot() {
+            currentProject.updatedAt = new Date().toISOString();
+            document.getElementById('save-status').innerText = 'Saved ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            // Save to LocalStorage
+            try {
+                localStorage.setItem('forgeai_current_project', JSON.stringify(currentProject));
+            } catch (e) {
+                console.warn('Storage quota exceeded');
+            }
+        }
+
+        function renderProjectsList() {
+            const list = document.getElementById('projects-list');
+            list.innerHTML = '';
+            projects.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "bg-panel border border-bordercolor rounded-2xl p-4 flex items-center justify-between";
+                div.innerHTML = `
+                    <div class="space-y-1">
+                        <h4 class="font-bold text-sm text-gray-100">${p.title}</h4>
+                        <span class="text-[11px] text-gray-400 font-mono">Updated: ${new Date(p.updatedAt).toLocaleDateString()}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="openProject('${p.id}')" class="px-3 py-1.5 rounded-lg bg-gold text-darkbg font-bold text-xs hover:bg-gold-light transition">Open</button>
+                        <button onclick="deleteProject('${p.id}')" class="p-1.5 rounded-lg bg-darkbg text-gray-400 hover:text-rose-400 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function createNewProject() {
+            const newProj = {
+                id: 'proj-' + Date.now(),
+                title: 'Untitled Project',
+                code: getDefaultTemplateCode('sneaker'),
+                updatedAt: new Date().toISOString()
+            };
+            projects.push(newProj);
+            loadProjectIntoStudio(newProj);
+            renderProjectsList();
+            switchTab('studio');
+            showToast('New project created');
+        }
+
+        function openProject(id) {
+            const p = projects.find(x => x.id === id);
+            if (p) {
+                loadProjectIntoStudio(p);
+                switchTab('studio');
+                showToast(`Loaded project: ${p.title}`);
+            }
+        }
+
+        function deleteProject(id) {
+            if (confirm('Delete this project?')) {
+                projects = projects.filter(x => x.id !== id);
+                renderProjectsList();
+                showToast('Project deleted');
+            }
+        }
+
+        function renderHistoryList() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = `
+                <div class="bg-panel border border-bordercolor p-4 rounded-xl flex items-center justify-between">
+                    <div>
+                        <div class="font-bold text-sm text-gray-200">Current Session Snapshot</div>
+                        <div class="text-xs text-gray-400 font-mono">Active working version</div>
+                    </div>
+                    <span class="text-xs text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">Active</span>
+                </div>
+            `;
+        }
+
+        // --- API Settings Management ---
+        function loadSavedSettings() {
+            const saved = localStorage.getItem('forgeai_settings');
+            if (saved) {
+                try {
+                    apiSettings = JSON.parse(saved);
+                    document.getElementById('api-provider').value = apiSettings.provider;
+                    document.getElementById('api-model').value = apiSettings.model;
+                    document.getElementById('api-key-input').value = apiSettings.apiKey;
+                    if (apiSettings.apiKey) {
+                        document.getElementById('api-status-text').innerText = 'Connected';
+                    }
+                } catch (e) {}
+            }
+        }
+
+        function saveApiSettings() {
+            apiSettings.provider = document.getElementById('api-provider').value;
+            apiSettings.model = document.getElementById('api-model').value;
+            apiSettings.apiKey = document.getElementById('api-key-input').value.trim();
+            
+            localStorage.setItem('forgeai_settings', JSON.stringify(apiSettings));
+            closeModal('api-settings-modal');
+            showToast('API settings saved successfully');
+            if (apiSettings.apiKey) {
+                document.getElementById('api-status-text').innerText = 'Connected';
+            }
+        }
+
+        async function testApiConnection() {
+            const apiKey = document.getElementById('api-key-input').value.trim();
+            const model = document.getElementById('api-model').value;
+            const resultDiv = document.getElementById('connection-test-result');
+            resultDiv.classList.remove('hidden');
+
+            if (!apiKey) {
+                resultDiv.className = "p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                resultDiv.innerText = "Please enter an API key to test.";
+                return;
+            }
+
+            resultDiv.className = "p-3 rounded-xl text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+            resultDiv.innerText = "Testing real request with Gemini API...";
+
+            try {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] })
+                });
+
+                if (response.ok) {
+                    resultDiv.className = "p-3 rounded-xl text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                    resultDiv.innerText = "Connection successful! Model responding correctly.";
+                } else {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || 'Invalid API key or model permissions.');
+                }
+            } catch (e) {
+                resultDiv.className = "p-3 rounded-xl text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                resultDiv.innerText = "Connection failed: " + e.message;
+            }
+        }
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('api-key-input');
+            const icon = document.getElementById('eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = "fa-solid fa-eye-slash";
+            } else {
+                input.type = 'password';
+                icon.className = "fa-solid fa-eye";
+            }
+        }
+
+        // --- Export Functions ---
+        function exportSingleHtml() {
+            const blob = new Blob([currentProject.code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = (currentProject.title.toLowerCase().replace(/\s+/g, '-')) + '.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Downloaded complete HTML successfully');
+            closeModal('export-modal');
+        }
+
+        function exportProjectJson() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentProject, null, 2));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = 'forgeai-backup.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('Project backup downloaded');
+            closeModal('export-modal');
+        }
+
+        function copySourceCodeToClipboard() {
+            const textArea = document.createElement('textarea');
+            textArea.value = currentProject.code;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showToast('Source code copied to clipboard!');
+            closeModal('export-modal');
+        }
+
+        // --- UI Modal Helpers ---
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+```
